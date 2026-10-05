@@ -8,6 +8,7 @@ using namespace std;
 //---------------LINKED LIST NODE-------------------------------
 class Node
 {
+    //accesible outside of class
     public:
     
     //STORE value or data
@@ -169,23 +170,34 @@ class DoublyLinkedList
 class PropertyNode
 {
     public:
+
+    //store the property's name
     string name;
+    //stor owner who owns property
     string owner;
+    //store the property's cost
     int cost;
+    //A pointer to the next PropertyNode in the linked list
     PropertyNode* next;
-    
+
+    //sets: name member to the parameter n,cost member to the parameter c, and sets owner to "Unowned"
+    //This node doesn't point to any other node yet.
     PropertyNode(string n, int c): name(n), cost(c), owner("Unowned"), next(nullptr) {}    
 };
 
 class MonopolyBoard
 {
     private:
+    //Pointer to the first node in the linked list (nullptr = empty list)
     PropertyNode* start;
+    //Integer to track how many properties are in the list
     int n;
 
     public:
+    //Default constructor: empty board, no properties
     MonopolyBoard() : start(nullptr), n(0) {}
 
+    //returns a pointer to the first node(to abe able to walk throught ther list)
     PropertyNode* getStart() 
     {
         return start;
@@ -193,60 +205,80 @@ class MonopolyBoard
 
     void buildBoard()
     {
-        //names
+        //Array of all property names
         string names [] = { "Go", "Baltic Ave", "Reading RR", "Oriental Ave", "Vermont Ave", "Penn. Ave", "St. Charles", "Electric Co.", "States Ave", "Virginia Ave", "Public Utils."};
-        //costs
+        //array of all corresponding costs(dollars)
         int costs[]={0,100,200,100,120,140,100,150,140,160,150};
 
-        //amount of properties
-        n=11;
+        //Temporary array of 11 pointers (to hold each node before linking)
         PropertyNode* nodes[11];
+        //Set the property count to 11
+        n=11;
+        //Loop 1: create all 11 nodes
         for(int i=0; i< n; i++)
             {
-                //create and link in 1 loop
+                //Allocate a new PropertyNode with this name and cost, store pointer
                 nodes[i]= new PropertyNode(names[i],costs[i]);
             }
+            //Set the board's start pointer to the first node
             start = nodes[0];
-
+        
+        //Loop 2: Link each node to the next one(CIRCULAR)
         for(int i=0; i< n; i++)
             {
+                //current point accces next pointer and assigns to it the next node on the list
                 nodes[i]-> next = nodes [(i+1) % n];
             }
-        start = nodes[0];
+            //Re-assign start
+            start = nodes[0];
+        
     }
 
     void printBoard()
     {
+        //starts at first node
         PropertyNode* current = start;
-        
+
+        //Loop exactly n times(n= 11 properties)
         for(int i=0; i< n; i++)
         {
+            //print
             cout << "[" << i << "]" << current->name
                 << " ($" <<current-> cost << ") -"
                 <<current-> owner << endl;
+            //Move to nect node in the circle
             current = current-> next;
         }
     }
-    
+
+    //Takes a node pointer and a number of steps to move forward
     PropertyNode* move(PropertyNode* pos, int steps)
     {
+        //Loop while steps > 0, decrementing each time
         while(steps--)
             {
+                //Move the pointer one node fowars in the circle
                 pos = pos-> next;
             }
+        //return new position affter moving 
             return pos;
     
     }
 
+    //Attempts to buy the property at position pos for player p
     void buy(PropertyNode* pos, string p)
     {
+        //check og the property is unowned
         if(pos->owner == "Unowned")
         {
+            //set the owner to the players name
             pos-> owner = p;
+            //print confirmation message
             cout<< p << " bought " << pos->name << " for $" << pos-> cost << endl;
         }
         else
         {
+            //Property is already taken
             cout<< p << " cannot buy "<< pos->name << " (owned by " << pos->owner << ")" << endl;
         }
     
@@ -287,52 +319,70 @@ int main()
 
  //------Part 2 Monopoly Game--------
     cout<< "=== PART 2: Monopoly Game ===" << endl;
+    //create a board object and build 11-node circular list
     MonopolyBoard board;
     board.buildBoard();
+    //print initial board(unowned)
     board.printBoard();
 
     //2 players
     string players[]={"Allen", "Kevin"};
+    //Both start at Go(first node)
     PropertyNode* positions[2]={board.getStart(), board.getStart()};
-    int money[2] = {100,100};
+    //each with $1,500
+    int money[2] = {1500,1500};
 
+    //seed the random number generator with vurrrent time
     srand(time(0));
+    //Game loop: 10 turrn total
     for(int t= 1; t <=10; t++)
         {
+            //turn 1->Allen(0), turn 2->Kevin(1),.....
             int i = (t-1) % 2;
+            //Roll a die(1-6)
             int d = rand() % 6 + 1;
+            //Move player forward d steps on the circular board
             positions[i] = board.move(positions[i], d);
+            //print what happend in this turn
             cout << "\nTurn " << t << ": " << players[i] << " rolls" << d 
                 << " , lands on " << positions[i]->name << endl;
 
+            //Only if the square has a cost(not Go)
             if(positions[i]->cost > 0)
                {
+                   //Case 1: Player already wons it = do nothing
                    if(positions[i]->owner == players[i] )
                    {
                        cout << players[i] << " already owns "<< positions[i]->name 
                            <<endl;
                    }
+                    //Case 2:Someone else owns it = can't buy
                    else if(positions[i]->owner != "Unowned")
                    {
                        cout << players[i] << " can't buy "<< positions[i]->name 
                            <<" (owned by "<< positions[i]->owner<< ")" <<endl;
                    }
+                    //Case 3: Unowned and player can afford it = BUY
                    else if(money[i] >= positions[i]->cost)
                    {
                        board.buy(positions[i], players[i]);
                        money[i] -= positions[i]-> cost;
-                   }                       
+                   }
+                    //Case 4: Unowned player can't afford it 
                    else
                    {
                        cout << players[i]<<" can't afford " << positions[i]->name
                            << endl;
                    }
+                   //show both playewwrs money after the transaction
                    cout << "Allen: $"<< money[0] << " | Kevin: $" << money[1] 
                        << endl;
                }
         }
+        //print the final state of the board(who owns what)
         cout << "\n----Final Board----" << endl;
         board.printBoard();
+        //end program
         return 0;
 
 }
