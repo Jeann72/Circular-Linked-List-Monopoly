@@ -19,7 +19,7 @@ Linked Lists are fast to add/remove, but slow to find things.
 +You have to walk to find it first, then unlike is instant.
 
 ## move
-+Time Complexity: O(steps)
++Time Complexity: O(k), k=steps
 
 +You take one step at a time(more steps = more time).
 
